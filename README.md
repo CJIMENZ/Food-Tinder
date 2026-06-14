@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Food Tinder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local-first Tinder-style recipe curator built with React, TypeScript, Tailwind, and Vite.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Food Tinder shows recipe cards that you can swipe right to keep or swipe left to pass. Your decisions train a lightweight taste profile in the browser:
 
-## React Compiler
+- liked meals boost similar ingredients, cuisines, categories, and tags
+- passed meals down-rank similar recipes
+- live recipe suggestions load from TheMealDB during local development
+- recipes and swipe decisions persist in `localStorage`
+- the full local state can be exported/imported as JSON so the storage layer can later move to a database
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Local development
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the Vite localhost URL shown in the terminal.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build check
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+## Storage model
+
+Current storage is browser-local:
+
+- `food_tinder_recipes_v2`
+- `food_tinder_decisions_v2`
+
+Use **Export JSON** to back up the current recipe cache and taste decisions. Use **Import JSON** to restore a previous local state.
+
+The exported file shape is intentionally simple:
+
+```ts
+{
+  version: 2,
+  exportedAt: string,
+  recipes: RecipeCard[],
+  decisions: SwipeRecord[]
+}
+```
+
+That shape is the bridge to future DB storage. A later backend can store recipes and decisions per user without rewriting the UI ranking logic.
+
+## Recipe/image strategy
+
+The app no longer depends on random hotlinked blog images in a hardcoded card list. It now:
+
+1. starts from a small local starter deck
+2. loads live recipe details from TheMealDB
+3. uses recipe-owned `strMealThumb` images when available
+4. falls back to an embedded SVG image if remote images fail
+5. keeps working from the local cache when the API or network is unavailable
+
+## Controls
+
+- Drag right or press the heart button to like a meal
+- Drag left or press X to pass
+- Flip the card to inspect ingredients and steps
+- Refresh Taste Queue to pull new suggestions based on current preferences
+- Export JSON / Import JSON to move local state between sessions or machines
+- Clear Taste Memory to reset likes/passes without deleting cached recipes
+- Reset Local Cache to return to the starter deck
